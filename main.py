@@ -23,11 +23,15 @@ def home():
 def run_flask():
     port = int(os.getenv('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
+
+def keep_alive():
+    """Start Flask server in background thread"""
+    t = Thread(target=run_flask, daemon=True)
+    t.start()
  
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}")
-    Thread(target=run_flask, daemon=True).start()
     print("✅ Simple role bot ready with 35s removal delay")
  
 @bot.event
@@ -78,5 +82,8 @@ async def on_voice_state_update(member, before, after):
                 print(f"⚠️ Missing perms to remove {role.name} from {member.name}")
             except discord.HTTPException as e:
                 print(f"⚠️ Error removing role from {member.name}: {e}")
- 
-bot.run(TOKEN)
+
+# CRITICAL: Start Flask BEFORE Discord bot
+if __name__ == "__main__":
+    keep_alive()  # ← Start Flask first!
+    bot.run(TOKEN)
